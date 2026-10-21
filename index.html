@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#0d6b63"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="المرتب"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>المرتب</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@700;800&display=swap">
+<style>
+/* Layout: single column app, sticky top tabs; summary first, detail below. Payslip-like ledger for the salary. */
+:root{
+  --bg:#f2f5f4; --surface:#ffffff; --ink:#14201f; --muted:#5d6e6b; --line:#d9e2e0;
+  --accent:#0d6b63; --accent-ink:#ffffff; --accent-soft:#dff0ed;
+  --ok:#1f7a45; --ok-soft:#dcf1e3;
+  --rest:#2457b3; --rest-soft:#e0e9fa;
+  --warn:#9a6200; --warn-soft:#fbeccb;
+  --bad:#b3261e; --bad-soft:#fbe0dd;
+  --trip:#6b3fa0; --trip-soft:#ece3f8;
+  --f-display:'Tajawal','IBM Plex Sans Arabic',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1716; --surface:#172221; --ink:#e6efed; --muted:#93a5a2; --line:#2a3a38;
+  --accent:#4fc2b6; --accent-ink:#06201d; --accent-soft:#1b3a37;
+  --ok:#6fd199; --ok-soft:#173826; --rest:#8cb2f5; --rest-soft:#1c2c4d;
+  --warn:#f0bb5a; --warn-soft:#41310f; --bad:#f2928b; --bad-soft:#4a1d1a;
+  --trip:#c4a2f0; --trip-soft:#32224a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1716; --surface:#172221; --ink:#e6efed; --muted:#93a5a2; --line:#2a3a38;
+  --accent:#4fc2b6; --accent-ink:#06201d; --accent-soft:#1b3a37;
+  --ok:#6fd199; --ok-soft:#173826; --rest:#8cb2f5; --rest-soft:#1c2c4d;
+  --warn:#f0bb5a; --warn-soft:#41310f; --bad:#f2928b; --bad-soft:#4a1d1a;
+  --trip:#c4a2f0; --trip-soft:#32224a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 0 10px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.brand h1{font-size:22px;font-weight:800}
+.sync{font-size:12px;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--line);padding:4px;border-radius:12px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:600 14px var(--f-body);padding:9px 4px;border-radius:9px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:18px;display:flex;flex-direction:column;gap:18px}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+section.panel>h2{font-size:18px;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:5px}
+input,select,textarea{width:100%;font:500 16px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.num{font-variant-numeric:tabular-nums}
+.btn{border:0;border-radius:10px;font:700 15px var(--f-body);padding:12px 18px;cursor:pointer;min-height:44px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.4;cursor:default}
+.x{border:1px solid var(--line);background:transparent;color:var(--bad);border-radius:8px;font:600 13px var(--f-body);padding:4px 10px;cursor:pointer}
+.toast button{margin-inline-start:12px;background:transparent;border:0;color:var(--accent);font:700 14px var(--f-body);cursor:pointer;text-decoration:underline}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.chip{border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px 8px;font:600 14px var(--f-body);cursor:pointer;min-height:44px}
+.chip[aria-pressed="true"]{border-color:currentColor}
+.chip[data-s="حضور"][aria-pressed="true"]{background:var(--ok-soft);color:var(--ok)}
+.chip[data-s="إضافي"][aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.chip[data-s="راحة"][aria-pressed="true"]{background:var(--rest-soft);color:var(--rest)}
+.chip[data-s="إجازة"][aria-pressed="true"]{background:var(--warn-soft);color:var(--warn)}
+.chip[data-s="غياب"][aria-pressed="true"]{background:var(--bad-soft);color:var(--bad)}
+.chip[data-s="إذن سفر"][aria-pressed="true"],.chip[data-s="مأمورية سفر"][aria-pressed="true"]{background:var(--trip-soft);color:var(--trip)}
+.hint{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-weight:600;z-index:20}
+/* period nav */
+.period{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.period .lbl{text-align:center;min-width:0}
+.period .lbl b{display:block;font-family:var(--f-display);font-size:18px}
+.period .lbl span{font-size:13px;color:var(--muted)}
+.period .btn{padding:10px 14px}
+/* counts */
+.counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
+.count{border-radius:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--line)}
+.count b{display:block;font-family:var(--f-display);font-size:30px;line-height:1.1}
+.count span{font-size:13px;color:var(--muted)}
+.count.ok b{color:var(--ok)} .count.rest b{color:var(--rest)} .count.trip b{color:var(--trip)}
+.count.warn b{color:var(--warn)} .count.bad b{color:var(--bad)} .count.acc b{color:var(--accent)}
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--accent)}
+/* payslip */
+.slip{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.slip .ln{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px dashed var(--line)}
+.slip .ln small{display:block;color:var(--muted);font-size:12px}
+.slip .ln .v{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.slip .ln.minus .v{color:var(--bad)}
+.slip .total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px 14px;background:var(--accent-soft)}
+.slip .total span{font-weight:700}
+.slip .total b{font-family:var(--f-display);font-size:30px;color:var(--accent);font-variant-numeric:tabular-nums}
+/* log table */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:14px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);background:var(--bg);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700}
+.p-حضور{background:var(--ok-soft);color:var(--ok)}
+.p-إضافي{background:var(--accent-soft);color:var(--accent)}
+.p-راحة{background:var(--rest-soft);color:var(--rest)}
+.p-إجازة{background:var(--warn-soft);color:var(--warn)}
+.p-غياب{background:var(--bad-soft);color:var(--bad)}
+.p-إذن_سفر,.p-مأمورية_سفر{background:var(--trip-soft);color:var(--trip)}
+.p-none{color:var(--muted);background:transparent;font-weight:500}
+.sw{display:flex;align-items:center;gap:10px}
+.sw label{margin:0;color:var(--ink);font-size:14px}
+.empty{color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+
+</head><body>
+<div class="wrap">
+<header class="top">
+  <div class="brand"><h1>المرتب</h1><span class="sync" id="sync"></span></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-today" aria-selected="true" data-tab="today">تسجيل اليوم</button>
+    <button role="tab" id="tab-query" aria-selected="false" data-tab="query">الاستعلام</button>
+    <button role="tab" id="tab-set" aria-selected="false" data-tab="set">الإعدادات</button>
+  </div>
+</header>
+
+<main>
+<!-- تسجيل اليوم -->
+<div id="v-today" class="view">
+  <p class="hint panel" id="first" style="margin:0 0 18px;padding:14px 18px" hidden>أول مرة؟ ابدأ من تبويب «الإعدادات» وسجّل المرتب الأساسي وقيمة البدل، وبعدها سجّل حضورك كل يوم من هنا.</p>
+  <section class="panel">
+    <h2>تسجيل يوم</h2>
+    <div class="grid" style="margin-bottom:14px">
+      <div><label for="f-date">التاريخ</label><input type="date" id="f-date"></div>
+      <div><label>اليوم</label><div id="f-dow" style="min-height:44px;display:flex;align-items:center;font-weight:600"></div></div>
+    </div>
+    <label>الحالة</label>
+    <div class="chips" id="f-chips"></div>
+    <div class="grid" id="f-times" style="margin-top:14px">
+      <div><label for="f-in">وقت الحضور</label><input type="time" id="f-in"></div>
+      <div><label for="f-out">وقت الانصراف</label><input type="time" id="f-out"></div>
+    </div>
+    <p class="hint" id="f-calc" style="margin:8px 0 0"></p>
+    <div style="margin-top:14px"><label for="f-note">ملاحظات</label><textarea id="f-note" rows="2"></textarea></div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn primary" id="f-save">حفظ</button>
+      <button class="btn danger" id="f-del">مسح اليوم ده</button>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <h2>آخر الأيام</h2>
+    <div class="tw"><table><thead><tr><th>التاريخ</th><th>اليوم</th><th>الحالة</th><th>حضور</th><th>انصراف</th><th></th></tr></thead><tbody id="recent"></tbody></table></div>
+  </section>
+</div>
+
+<!-- الاستعلام -->
+<div id="v-query" class="view" hidden>
+  <section class="panel">
+    <div class="period">
+      <button class="btn ghost" id="p-prev" aria-label="الفترة السابقة">›</button>
+      <div class="lbl"><b id="p-title"></b><span id="p-range" class="num"></span></div>
+      <button class="btn ghost" id="p-next" aria-label="الفترة التالية">‹</button>
+    </div>
+    <div style="margin-top:14px">
+      <div class="hint num" id="p-prog"></div>
+      <div class="progress"><i id="p-bar" style="width:0"></i></div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
+    <h2>ملخص الأيام</h2>
+    <div class="counts" id="counts"></div>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
+    <h2>المرتب المستحق</h2>
+    <div class="slip" id="slip"></div>
+    <p class="hint" id="slip-note" style="margin-bottom:0"></p>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
+    <h2>الحوافز وشريحة الأرباح</h2>
+    <div class="slip" id="extras"></div>
+    <p class="hint" style="margin-bottom:0">بنود منفصلة، مش داخلة في المرتب المستحق فوق.</p>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
+    <h2>تفاصيل الفترة</h2>
+    <div class="tw"><table><thead><tr><th>التاريخ</th><th>اليوم</th><th>الحالة</th><th>حضور</th><th>انصراف</th><th>تأخير</th><th>أوفر تايم</th><th>ملاحظات</th><th></th></tr></thead><tbody id="detail"></tbody></table></div>
+    <p class="hint">اضغط على أي يوم لتعديله، أو على «مسح» لو مدخله غلط.</p>
+  </section>
+</div>
+
+<!-- الإعدادات -->
+<div id="v-set" class="view" hidden>
+  <section class="panel">
+    <h2>المرتب والبدلات</h2>
+    <div class="grid">
+      <div><label for="s-basic">المرتب الأساسي (شهري)</label><input type="number" inputmode="decimal" id="s-basic" step="any"></div>
+      <div><label for="s-allow">بدل الانتقال والاتصال</label><input type="number" inputmode="decimal" id="s-allow" step="any"></div>
+      <div><label for="s-coast">بدل الساحل (شهري)</label><input type="number" inputmode="decimal" id="s-coast" step="any"></div>
+      <div><label for="s-coastdays">أيام بدل الساحل في الشهر</label><input type="number" inputmode="decimal" id="s-coastdays" step="any"></div>
+      <div><label for="s-div">عدد أيام الشهر لحساب قيمة اليوم</label><input type="number" inputmode="decimal" id="s-div" step="any"></div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <h2>مواعيد العمل والفترة</h2>
+    <div class="grid">
+      <div><label for="s-start">ميعاد الحضور</label><input type="time" id="s-start"></div>
+      <div><label for="s-end">ميعاد الانصراف</label><input type="time" id="s-end"></div>
+      <div><label for="s-pday">تبدأ فترة المرتب يوم</label><input type="number" inputmode="numeric" id="s-pday" min="1" max="28"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+      <div class="sw"><input type="checkbox" id="s-absded"><label for="s-absded">اخصم أيام الغياب (بقيمة يوم لكل غياب)</label></div>
+      <div class="sw"><input type="checkbox" id="s-lateded"><label for="s-lateded">اخصم دقائق التأخير (بسعر الساعة)</label></div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <h2>طريقة الحساب</h2>
+    <p class="hint" style="margin:0;line-height:1.9">
+      الصافي = الأساسي × (1 − 1.98% صندوق الزمالة).<br>
+      قيمة اليوم = (الأساسي + البدل) ÷ عدد أيام الشهر. سعر ساعة السهر = قيمة اليوم ÷ 8.<br>
+      أيام الإضافي = أيام «حضور في الراحة»، كل يوم بقيمة يوم.<br>
+      بدل الساحل = (بدل الساحل ÷ أيام الساحل) × أيام الحضور، وتشمل إذن السفر والمأمورية والإضافي.<br>
+      المرتب المستحق = الصافي + البدل + الإضافي + السهر + بدل الساحل − الخصومات.
+    </p>
+  </section>
+</div>
+</main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+document.documentElement.dir="rtl";document.documentElement.lang="ar";
+var STATUSES=["حضور","راحة","إجازة","غياب","إذن سفر","مأمورية سفر","إضافي"];
+var LABEL={"إضافي":"حضور في الراحة"};
+var WORK={"حضور":1,"إذن سفر":1,"مأمورية سفر":1,"إضافي":1};
+var MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+var DOW=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+var LS="almortab.v2";
+var FUND=1.98; /* خصم صندوق الزمالة % ثابت */
+
+function defaults(){return {
+  settings:{basic:"",allow:"",coast:"",coastDays:21,div:30,start:"08:00",end:"17:00",pday:21,absded:true,lateded:false},
+  records:{}
+};}
+var state=defaults();
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id)}
+function pad(n){return (n<10?"0":"")+n}
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+function mins(t){if(!t)return null;var p=t.split(":");return +p[0]*60+ +p[1]}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtHM(m){m=Math.round(m);return Math.floor(m/60)+" س "+pad(m%60)+" د"}
+function dispDate(d){return d.getDate()+" "+MONTHS[d.getMonth()]}
+function toast(t){var e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},1800)}
+function pillCls(s){return "pill p-"+(s?s.replace(/ /g,"_"):"none")}
+function lbl(s){return LABEL[s]||s}
+
+/* ---------- calculations ---------- */
+function lateOf(r){var S=state.settings;if(!WORK[r.status]||!r.in)return 0;return Math.max(0,mins(r.in)-mins(S.start))}
+function otOf(r){var S=state.settings;if(!WORK[r.status]||!r.out)return 0;return Math.max(0,mins(r.out)-mins(S.end))}
+
+function periodRange(y,m){var S=state.settings;
+  return {start:new Date(y,m,S.pday),end:new Date(y,m+1,S.pday-1)}}
+function currentPeriodKey(){var t=new Date(),S=state.settings;
+  var y=t.getFullYear(),m=t.getMonth();if(t.getDate()<S.pday){m--;if(m<0){m=11;y--}}
+  return {y:y,m:m}}
+var per=currentPeriodKey();
+
+function compute(range){
+  var S=state.settings,c={حضور:0,راحة:0,إجازة:0,غياب:0,"إذن سفر":0,"مأمورية سفر":0,إضافي:0,late:0,ot:0,recorded:0,total:0,days:[]};
+  for(var d=new Date(range.start);d<=range.end;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){
+    var k=iso(d),r=state.records[k];c.total++;
+    c.days.push({date:new Date(d),key:k,rec:r});
+    if(!r)continue;c.recorded++;c[r.status]++;c.late+=lateOf(r);c.ot+=otOf(r);
+  }
+  c.attend=c["حضور"]+c["إذن سفر"]+c["مأمورية سفر"]+c["إضافي"];
+  var div=+S.div||30,dayVal=((+S.basic||0)+(+S.allow||0))/div,hourVal=dayVal/8;
+  c.net=(+S.basic||0)*(1-FUND/100);
+  c.allow=+S.allow||0;
+  c.dayVal=dayVal;c.hourVal=hourVal;
+  c.extra=dayVal*c["إضافي"];
+  c.otPay=hourVal*c.ot/60;
+  c.coastDay=(+S.coastDays? (+S.coast||0)/(+S.coastDays):0);
+  c.coastPay=c.coastDay*c.attend;
+  c.absDed=S.absded?dayVal*c["غياب"]:0;
+  c.lateDed=S.lateded?hourVal*c.late/60:0;
+  c.due=c.net+c.allow+c.extra+c.otPay+c.coastPay-c.absDed-c.lateDed;
+  return c;
+}
+
+/* ---------- storage ---------- */
+var db=null,dbRef=null,saveT=null;
+function setSync(t){$("sync").textContent=t}
+function persist(){
+  try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}
+  if(dbRef){setSync("جارٍ الحفظ…");clearTimeout(saveT);saveT=setTimeout(function(){
+    dbRef.set({json:JSON.stringify(state)}).then(function(){setSync("تم الحفظ")}).catch(function(){setSync("الحفظ على الجهاز فقط")});
+  },600)}
+}
+function adopt(o){
+  if(!o||!o.settings||!o.records)return;
+  var d=defaults();state={settings:Object.assign(d.settings,o.settings),records:o.records};
+}
+function load(){
+  try{var s=localStorage.getItem(LS);if(s)adopt(JSON.parse(s))}catch(e){}
+  setSync("الحفظ على الجهاز");
+  (typeof claude==="undefined"?Promise.resolve([null,null]):Promise.all([claude.use("db"),claude.use("user")])).then(function(r){
+    db=r[0];var u=r[1];if(!db||!u)return null;
+    return u.id().then(function(id){if(!id)return null;
+      dbRef=db.doc("data/users/"+id+"/state2");
+      return dbRef.get().then(function(snap){
+        if(snap.exists&&snap.data()&&snap.data().json){adopt(JSON.parse(snap.data().json));try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}
+          per=currentPeriodKey();renderAll();setSync("تم الحفظ")}
+        else{persist()}
+      });
+    });
+  }).catch(function(){dbRef=null;setSync("الحفظ على الجهاز")});
+}
+
+/* ---------- today form ---------- */
+var sel=null;
+function buildChips(){
+  $("f-chips").innerHTML=STATUSES.map(function(s){return '<button type="button" class="chip" data-s="'+s+'" aria-pressed="false">'+lbl(s)+'</button>'}).join("");
+}
+function setForm(key){
+  $("f-date").value=key;var d=parse(key);$("f-dow").textContent=DOW[d.getDay()];
+  var r=state.records[key];
+  sel=r?r.status:null;
+  $("f-in").value=r?r.in:"";$("f-out").value=r?r.out:"";$("f-note").value=r?r.note:"";
+  $("f-del").disabled=!r;
+  refreshChips();
+}
+function refreshChips(){
+  [].forEach.call($("f-chips").children,function(b){b.setAttribute("aria-pressed",b.dataset.s===sel?"true":"false")});
+  var w=!!(sel&&WORK[sel]);$("f-times").hidden=!w;
+  var S=state.settings,li=$("f-in").value?Math.max(0,mins($("f-in").value)-mins(S.start)):0,
+      ot=$("f-out").value?Math.max(0,mins($("f-out").value)-mins(S.end)):0;
+  var t=[];if(w&&li)t.push("تأخير "+li+" دقيقة");if(w&&ot)t.push("أوفر تايم "+fmtHM(ot));
+  $("f-calc").textContent=w?t.join(" · "):"";
+}
+function saveDay(){
+  var key=$("f-date").value;if(!key){toast("اختار التاريخ");return}
+  if(!sel){toast("اختار الحالة");return}
+  state.records[key]={status:sel,in:WORK[sel]?$("f-in").value:"",out:WORK[sel]?$("f-out").value:"",note:$("f-note").value.trim()};
+  persist();toast("تم حفظ "+DOW[parse(key).getDay()]+" "+dispDate(parse(key)));
+  $("f-del").disabled=false;renderRecent();renderQuery();
+}
+function delDay(key){
+  key=key||$("f-date").value;var old=state.records[key];if(!old)return;
+  delete state.records[key];persist();
+  if($("f-date").value===key)setForm(key);
+  renderRecent();renderQuery();
+  var e=$("toast");e.innerHTML="";e.appendChild(document.createTextNode("تم مسح "+dispDate(parse(key))));
+  var u=document.createElement("button");u.textContent="تراجع";
+  u.onclick=function(){state.records[key]=old;persist();if($("f-date").value===key)setForm(key);renderRecent();renderQuery();e.hidden=true};
+  e.appendChild(u);e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},5000);
+}
+function recRow(d,r,extra){
+  var k=iso(d);
+  return '<tr data-k="'+k+'" class="'+(k===iso(new Date())?"today":"")+'"><td class="num">'+dispDate(d)+'</td><td>'+DOW[d.getDay()]+'</td><td>'+
+   (r?'<span class="'+pillCls(r.status)+'">'+lbl(r.status)+'</span>':'<span class="pill p-none">لم يُسجَّل</span>')+'</td>'+
+   '<td class="num">'+(r&&r.in||"—")+'</td><td class="num">'+(r&&r.out||"—")+'</td>'+(extra?extra(r):"")+'<td>'+(r?'<button class="x" data-del="'+k+'">مسح</button>':'')+'</td></tr>';
+}
+function renderRecent(){
+  var rows=[],t=new Date();
+  for(var i=0;i<7;i++){var d=new Date(t.getFullYear(),t.getMonth(),t.getDate()-i);rows.push(recRow(d,state.records[iso(d)]))}
+  $("recent").innerHTML=rows.join("");
+}
+
+/* ---------- query ---------- */
+function countCard(cls,n,label){return '<div class="count '+cls+'"><b class="num">'+n+'</b><span>'+label+'</span></div>'}
+function line(label,sub,val,minus){return '<div class="ln'+(minus?' minus':'')+'"><div>'+label+(sub?'<small>'+sub+'</small>':'')+'</div><div class="v">'+(minus?'− ':'')+fmt(val)+'</div></div>'}
+function renderQuery(){
+  var R=periodRange(per.y,per.m),c=compute(R);
+  $("p-title").textContent="فترة "+MONTHS[per.m];
+  $("p-range").textContent="من "+dispDate(R.start)+" إلى "+dispDate(R.end)+" "+R.end.getFullYear();
+  $("p-prog").textContent="تم تسجيل "+c.recorded+" يوم من "+c.total+(c.total-c.recorded?" · باقي "+(c.total-c.recorded)+" لم يُسجَّل":"");
+  $("p-bar").style.width=(100*c.recorded/c.total)+"%";
+  $("counts").innerHTML=
+    countCard("ok",c["حضور"],"أيام حضور")+
+    countCard("rest",c["راحة"],"أيام راحة")+
+    countCard("trip",c["إذن سفر"],"إذن سفر")+
+    countCard("trip",c["مأمورية سفر"],"مأمورية سفر")+
+    countCard("acc",c["إضافي"],"حضور في الراحة")+
+    countCard("warn",c["إجازة"],"إجازة")+
+    countCard("bad",c["غياب"],"غياب")+
+    countCard("acc",c.attend,"إجمالي أيام الحضور (شامل السفر)")+
+    countCard("warn",fmtHM(c.late).replace(" س ",":").replace(" د",""),"إجمالي التأخير (س:د)")+
+    countCard("ok",fmtHM(c.ot).replace(" س ",":").replace(" د",""),"إجمالي الأوفر تايم (س:د)");
+  var S=state.settings;
+  $("slip").innerHTML=
+    line("المرتب الأساسي بعد الخصم","الأساسي "+fmt(+S.basic||0)+" − صندوق الزمالة "+FUND+"%",c.net)+
+    line("البدل","",c.allow)+
+    (c.extra?line("أيام إضافي",""+c["إضافي"]+" × "+fmt(c.dayVal),c.extra):"")+
+    line("السهرات",""+fmtHM(c.ot)+" × "+fmt(c.hourVal)+" للساعة",c.otPay)+
+    line("بدل الساحل",""+c.attend+" يوم × "+fmt(c.coastDay),c.coastPay)+
+    (c.absDed?line("خصم الغياب",""+c["غياب"]+" × "+fmt(c.dayVal),c.absDed,true):"")+
+    (c.lateDed?line("خصم التأخير",""+fmtHM(c.late),c.lateDed,true):"")+
+    '<div class="total"><span>المرتب المستحق</span><b>'+fmt(c.due)+'</b></div>';
+  $("extras").innerHTML=
+    line("الحوافز 25%","25% × (الأساسي "+fmt(+S.basic||0)+" + بدل الانتقال والاتصال "+fmt(+S.allow||0)+")",0.25*((+S.basic||0)+(+S.allow||0)))+
+    line("شريحة الأرباح 8%","8% × الأساسي "+fmt(+S.basic||0),0.08*(+S.basic||0));
+  $("slip-note").textContent=c.recorded<c.total?"الحساب على الأيام المسجلة حتى الآن. الأيام اللي لسه ما اتسجلتش مش بتتخصم.":"";
+  $("detail").innerHTML=c.days.map(function(x){
+    return recRow(x.date,x.rec,function(r){
+      var l=r?lateOf(r):0,o=r?otOf(r):0;
+      return '<td class="num">'+(l?l+" د":"—")+'</td><td class="num">'+(o?fmtHM(o):"—")+'</td><td>'+((r&&r.note)||"")+'</td>';
+    });
+  }).join("");
+}
+
+/* ---------- settings ---------- */
+var SFIELDS={basic:"s-basic",allow:"s-allow",coast:"s-coast",coastDays:"s-coastdays",div:"s-div",start:"s-start",end:"s-end",pday:"s-pday"};
+function fillSettings(){
+  Object.keys(SFIELDS).forEach(function(k){$(SFIELDS[k]).value=state.settings[k]});
+  $("s-absded").checked=!!state.settings.absded;$("s-lateded").checked=!!state.settings.lateded;
+}
+function onSetting(){
+  var S=state.settings;
+  Object.keys(SFIELDS).forEach(function(k){
+    var v=$(SFIELDS[k]).value;
+    if(k==="start"||k==="end"){if(v)S[k]=v}
+    else if(v!==""&&!isNaN(+v))S[k]=+v;
+  });
+  if(S.pday<1||S.pday>28)S.pday=21;
+  S.absded=$("s-absded").checked;S.lateded=$("s-lateded").checked;
+  persist();$("first").hidden=!!(+S.basic);renderQuery();renderRecent();refreshChips();
+}
+
+/* ---------- wiring ---------- */
+function showTab(t){
+  ["today","query","set"].forEach(function(n){
+    $("v-"+n).hidden=n!==t;$("tab-"+n).setAttribute("aria-selected",n===t?"true":"false");
+  });
+  if(t==="query")renderQuery();
+  window.scrollTo(0,0);
+}
+function editDay(k){setForm(k);showTab("today")}
+function renderAll(){$("first").hidden=!!(+state.settings.basic);fillSettings();setForm($("f-date").value||iso(new Date()));renderRecent();renderQuery()}
+
+buildChips();
+$("f-chips").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;sel=b.dataset.s;
+  refreshChips()});
+$("f-date").addEventListener("change",function(){if($("f-date").value)setForm($("f-date").value)});
+$("f-in").addEventListener("input",refreshChips);$("f-out").addEventListener("input",refreshChips);
+$("f-save").addEventListener("click",saveDay);$("f-del").addEventListener("click",function(){delDay()});
+document.querySelector(".tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)showTab(b.dataset.tab)});
+$("p-prev").addEventListener("click",function(){per.m--;if(per.m<0){per.m=11;per.y--}renderQuery()});
+$("p-next").addEventListener("click",function(){per.m++;if(per.m>11){per.m=0;per.y++}renderQuery()});
+["recent","detail"].forEach(function(id){$(id).addEventListener("click",function(e){var x=e.target.closest("[data-del]");if(x){delDay(x.dataset.del);return}var tr=e.target.closest("tr");if(tr&&tr.dataset.k)editDay(tr.dataset.k)})});
+Object.keys(SFIELDS).forEach(function(k){$(SFIELDS[k]).addEventListener("input",onSetting)});
+$("s-absded").addEventListener("change",onSetting);$("s-lateded").addEventListener("change",onSetting);
+
+load();
+$("f-date").value=iso(new Date());
+renderAll();
+})();
+</script>
+
+<script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body></html>
