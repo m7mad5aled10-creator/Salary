@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#0d6b63"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="المرتب"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#0d6b63"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="المرتب"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>المرتب</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@700;800&display=swap">
@@ -63,7 +63,6 @@ textarea{resize:vertical;min-height:60px}
 .chip{border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px 8px;font:600 14px var(--f-body);cursor:pointer;min-height:44px}
 .chip[aria-pressed="true"]{border-color:currentColor}
 .chip[data-s="حضور"][aria-pressed="true"]{background:var(--ok-soft);color:var(--ok)}
-.chip[data-s="إضافي"][aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
 .chip[data-s="راحة"][aria-pressed="true"]{background:var(--rest-soft);color:var(--rest)}
 .chip[data-s="إجازة"][aria-pressed="true"]{background:var(--warn-soft);color:var(--warn)}
 .chip[data-s="غياب"][aria-pressed="true"]{background:var(--bad-soft);color:var(--bad)}
@@ -104,7 +103,6 @@ tbody tr:hover{background:var(--bg)}
 tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
 .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700}
 .p-حضور{background:var(--ok-soft);color:var(--ok)}
-.p-إضافي{background:var(--accent-soft);color:var(--accent)}
 .p-راحة{background:var(--rest-soft);color:var(--rest)}
 .p-إجازة{background:var(--warn-soft);color:var(--warn)}
 .p-غياب{background:var(--bad-soft);color:var(--bad)}
@@ -171,6 +169,14 @@ tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
   </section>
 
   <section class="panel" style="margin-top:18px">
+    <div class="grid" style="align-items:end">
+      <div><label for="p-hol">عدد الإجازات الرسمية في الفترة دي</label><input type="number" inputmode="numeric" id="p-hol" min="0" step="1" placeholder="0"></div>
+      <div class="hint" id="p-allowed" style="padding-bottom:10px"></div>
+    </div>
+    <p class="hint" style="margin:10px 0 0">كل إجازة رسمية بتزوّد الراحات المسموحة يوم. لو خدت راحات أقل من المسموح، الفرق بيتحسب أيام عمل إضافي في آخر الفترة.</p>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
     <h2>ملخص الأيام</h2>
     <div class="counts" id="counts"></div>
   </section>
@@ -203,6 +209,7 @@ tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
       <div><label for="s-allow">بدل الانتقال والاتصال</label><input type="number" inputmode="decimal" id="s-allow" step="any"></div>
       <div><label for="s-coast">بدل الساحل (شهري)</label><input type="number" inputmode="decimal" id="s-coast" step="any"></div>
       <div><label for="s-coastdays">أيام بدل الساحل في الشهر</label><input type="number" inputmode="decimal" id="s-coastdays" step="any"></div>
+      <div><label for="s-rest">الراحات الشهرية (بدون إجازات رسمية)</label><input type="number" inputmode="numeric" id="s-rest" step="1" min="0"></div>
       <div><label for="s-div">عدد أيام الشهر لحساب قيمة اليوم</label><input type="number" inputmode="decimal" id="s-div" step="any"></div>
     </div>
   </section>
@@ -223,8 +230,8 @@ tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
     <p class="hint" style="margin:0;line-height:1.9">
       الصافي = الأساسي × (1 − 1.98% صندوق الزمالة).<br>
       قيمة اليوم = (الأساسي + البدل) ÷ عدد أيام الشهر. سعر ساعة السهر = قيمة اليوم ÷ 8.<br>
-      أيام الإضافي = أيام «حضور في الراحة»، كل يوم بقيمة يوم.<br>
-      بدل الساحل = (بدل الساحل ÷ أيام الساحل) × أيام الحضور، وتشمل إذن السفر والمأمورية والإضافي.<br>
+      الراحات المسموحة = الراحات الشهرية (8) + الإجازات الرسمية. أي راحة ما أخدتهاش بتتحسب يوم عمل إضافي بقيمة يوم، وبتتضاف في آخر الفترة.<br>
+      بدل الساحل = (بدل الساحل ÷ أيام الساحل) × أيام الحضور، وتشمل إذن السفر والمأمورية.<br>
       المرتب المستحق = الصافي + البدل + الإضافي + السهر + بدل الساحل − الخصومات.
     </p>
   </section>
@@ -237,17 +244,17 @@ tr.today td:first-child{box-shadow:inset -3px 0 0 var(--accent)}
 (function(){
 "use strict";
 document.documentElement.dir="rtl";document.documentElement.lang="ar";
-var STATUSES=["حضور","راحة","إجازة","غياب","إذن سفر","مأمورية سفر","إضافي"];
-var LABEL={"إضافي":"حضور في الراحة"};
-var WORK={"حضور":1,"إذن سفر":1,"مأمورية سفر":1,"إضافي":1};
+var STATUSES=["حضور","راحة","إجازة","غياب","إذن سفر","مأمورية سفر"];
+var LABEL={};
+var WORK={"حضور":1,"إذن سفر":1,"مأمورية سفر":1};
 var MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 var DOW=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 var LS="almortab.v2";
 var FUND=1.98; /* خصم صندوق الزمالة % ثابت */
 
 function defaults(){return {
-  settings:{basic:"",allow:"",coast:"",coastDays:21,div:30,start:"08:00",end:"17:00",pday:21,absded:true,lateded:false},
-  records:{}
+  settings:{basic:"",allow:"",coast:"",coastDays:21,div:30,rest:8,start:"08:00",end:"17:00",pday:21,absded:true,lateded:false},
+  records:{},periods:{}
 };}
 var state=defaults();
 
@@ -275,19 +282,23 @@ function currentPeriodKey(){var t=new Date(),S=state.settings;
   return {y:y,m:m}}
 var per=currentPeriodKey();
 
-function compute(range){
-  var S=state.settings,c={حضور:0,راحة:0,إجازة:0,غياب:0,"إذن سفر":0,"مأمورية سفر":0,إضافي:0,late:0,ot:0,recorded:0,total:0,days:[]};
+function compute(range,hol){
+  var S=state.settings,c={حضور:0,راحة:0,إجازة:0,غياب:0,"إذن سفر":0,"مأمورية سفر":0,late:0,ot:0,recorded:0,total:0,days:[]};
   for(var d=new Date(range.start);d<=range.end;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){
     var k=iso(d),r=state.records[k];c.total++;
     c.days.push({date:new Date(d),key:k,rec:r});
     if(!r)continue;c.recorded++;c[r.status]++;c.late+=lateOf(r);c.ot+=otOf(r);
   }
-  c.attend=c["حضور"]+c["إذن سفر"]+c["مأمورية سفر"]+c["إضافي"];
+  c.attend=c["حضور"]+c["إذن سفر"]+c["مأمورية سفر"];
+  c.hol=hol||0;c.allowedRest=(+S.rest||0)+c.hol;
+  c.extraDays=Math.max(0,c.allowedRest-c["راحة"]);
+  var td=new Date();td=new Date(td.getFullYear(),td.getMonth(),td.getDate());
+  c.finished=td>range.end||c.recorded===c.total;
   var div=+S.div||30,dayVal=((+S.basic||0)+(+S.allow||0))/div,hourVal=dayVal/8;
   c.net=(+S.basic||0)*(1-FUND/100);
   c.allow=+S.allow||0;
   c.dayVal=dayVal;c.hourVal=hourVal;
-  c.extra=dayVal*c["إضافي"];
+  c.extra=c.finished?dayVal*c.extraDays:0;
   c.otPay=hourVal*c.ot/60;
   c.coastDay=(+S.coastDays? (+S.coast||0)/(+S.coastDays):0);
   c.coastPay=c.coastDay*c.attend;
@@ -308,7 +319,8 @@ function persist(){
 }
 function adopt(o){
   if(!o||!o.settings||!o.records)return;
-  var d=defaults();state={settings:Object.assign(d.settings,o.settings),records:o.records};
+  var d=defaults();Object.keys(o.records).forEach(function(k){if(o.records[k].status==="إضافي")o.records[k].status="حضور"});
+  state={settings:Object.assign(d.settings,o.settings),records:o.records,periods:o.periods||{}};
 }
 function load(){
   try{var s=localStorage.getItem(LS);if(s)adopt(JSON.parse(s))}catch(e){}
@@ -380,7 +392,8 @@ function renderRecent(){
 function countCard(cls,n,label){return '<div class="count '+cls+'"><b class="num">'+n+'</b><span>'+label+'</span></div>'}
 function line(label,sub,val,minus){return '<div class="ln'+(minus?' minus':'')+'"><div>'+label+(sub?'<small>'+sub+'</small>':'')+'</div><div class="v">'+(minus?'− ':'')+fmt(val)+'</div></div>'}
 function renderQuery(){
-  var R=periodRange(per.y,per.m),c=compute(R);
+  var R=periodRange(per.y,per.m),pk=per.y+"-"+per.m,c=compute(R,(state.periods[pk]||{}).hol);
+  $("p-hol").value=c.hol||"";$("p-allowed").textContent="الراحات المسموحة في الفترة دي: "+c.allowedRest+" يوم ("+(+state.settings.rest||0)+" + "+c.hol+" إجازة رسمية)";
   $("p-title").textContent="فترة "+MONTHS[per.m];
   $("p-range").textContent="من "+dispDate(R.start)+" إلى "+dispDate(R.end)+" "+R.end.getFullYear();
   $("p-prog").textContent="تم تسجيل "+c.recorded+" يوم من "+c.total+(c.total-c.recorded?" · باقي "+(c.total-c.recorded)+" لم يُسجَّل":"");
@@ -390,7 +403,8 @@ function renderQuery(){
     countCard("rest",c["راحة"],"أيام راحة")+
     countCard("trip",c["إذن سفر"],"إذن سفر")+
     countCard("trip",c["مأمورية سفر"],"مأمورية سفر")+
-    countCard("acc",c["إضافي"],"حضور في الراحة")+
+    countCard("rest",c.allowedRest,"الراحات المسموحة")+
+    countCard("acc",c.extraDays,"أيام عمل إضافي")+
     countCard("warn",c["إجازة"],"إجازة")+
     countCard("bad",c["غياب"],"غياب")+
     countCard("acc",c.attend,"إجمالي أيام الحضور (شامل السفر)")+
@@ -400,7 +414,7 @@ function renderQuery(){
   $("slip").innerHTML=
     line("المرتب الأساسي بعد الخصم","الأساسي "+fmt(+S.basic||0)+" − صندوق الزمالة "+FUND+"%",c.net)+
     line("البدل","",c.allow)+
-    (c.extra?line("أيام إضافي",""+c["إضافي"]+" × "+fmt(c.dayVal),c.extra):"")+
+    (c.finished?(c.extraDays?line("أيام عمل إضافي",c.extraDays+" × "+fmt(c.dayVal)+" (الراحات المسموحة "+c.allowedRest+" − اللي خدتها "+c["راحة"]+")",c.extra):""):line("أيام عمل إضافي","هتتحسب في آخر الفترة · لحد دلوقتي "+c.extraDays+" يوم (مسموح "+c.allowedRest+" − خدت "+c["راحة"]+")",0))+
     line("السهرات",""+fmtHM(c.ot)+" × "+fmt(c.hourVal)+" للساعة",c.otPay)+
     line("بدل الساحل",""+c.attend+" يوم × "+fmt(c.coastDay),c.coastPay)+
     (c.absDed?line("خصم الغياب",""+c["غياب"]+" × "+fmt(c.dayVal),c.absDed,true):"")+
@@ -419,7 +433,7 @@ function renderQuery(){
 }
 
 /* ---------- settings ---------- */
-var SFIELDS={basic:"s-basic",allow:"s-allow",coast:"s-coast",coastDays:"s-coastdays",div:"s-div",start:"s-start",end:"s-end",pday:"s-pday"};
+var SFIELDS={basic:"s-basic",allow:"s-allow",coast:"s-coast",coastDays:"s-coastdays",rest:"s-rest",div:"s-div",start:"s-start",end:"s-end",pday:"s-pday"};
 function fillSettings(){
   Object.keys(SFIELDS).forEach(function(k){$(SFIELDS[k]).value=state.settings[k]});
   $("s-absded").checked=!!state.settings.absded;$("s-lateded").checked=!!state.settings.lateded;
@@ -454,6 +468,7 @@ $("f-date").addEventListener("change",function(){if($("f-date").value)setForm($(
 $("f-in").addEventListener("input",refreshChips);$("f-out").addEventListener("input",refreshChips);
 $("f-save").addEventListener("click",saveDay);$("f-del").addEventListener("click",function(){delDay()});
 document.querySelector(".tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)showTab(b.dataset.tab)});
+$("p-hol").addEventListener("input",function(){var pk=per.y+"-"+per.m,v=Math.max(0,Math.floor(+$("p-hol").value||0));state.periods[pk]={hol:v};persist();var f=$("p-hol");renderQuery();$("p-hol").value=v||""});
 $("p-prev").addEventListener("click",function(){per.m--;if(per.m<0){per.m=11;per.y--}renderQuery()});
 $("p-next").addEventListener("click",function(){per.m++;if(per.m>11){per.m=0;per.y++}renderQuery()});
 ["recent","detail"].forEach(function(id){$(id).addEventListener("click",function(e){var x=e.target.closest("[data-del]");if(x){delDay(x.dataset.del);return}var tr=e.target.closest("tr");if(tr&&tr.dataset.k)editDay(tr.dataset.k)})});
