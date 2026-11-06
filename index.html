@@ -294,7 +294,7 @@ function pillCls(s){return "pill p-"+(s?s.replace(/ /g,"_"):"none")}
 function lbl(s){return LABEL[s]||s}
 
 /* ---------- calculations ---------- */
-function lateOf(r){var S=state.settings;if(!WORK[r.status]||!r.in)return 0;return Math.max(0,mins(r.in)-mins(S.start))}
+function lateOf(r){var S=state.settings;if(r.status!=="حضور"||!r.in)return 0; /* إذن السفر والمأمورية ما بيتحسبوش تأخير */return Math.max(0,mins(r.in)-mins(S.start))}
 function otOf(r){var S=state.settings;if(!WORK[r.status]||!r.out)return 0;return Math.max(0,mins(r.out)-mins(S.end))}
 
 function periodRange(y,m){var S=state.settings;
@@ -376,7 +376,7 @@ function setForm(key){
 function refreshChips(){
   [].forEach.call($("f-chips").children,function(b){b.setAttribute("aria-pressed",b.dataset.s===sel?"true":"false")});
   var w=!!(sel&&WORK[sel]);$("f-times").hidden=!w;
-  var S=state.settings,li=$("f-in").value?Math.max(0,mins($("f-in").value)-mins(S.start)):0,
+  var S=state.settings,li=(sel==="حضور"&&$("f-in").value)?Math.max(0,mins($("f-in").value)-mins(S.start)):0,
       ot=$("f-out").value?Math.max(0,mins($("f-out").value)-mins(S.end)):0;
   var t=[];if(w&&li)t.push("تأخير "+li+" دقيقة");if(w&&ot)t.push("أوفر تايم "+fmtHM(ot));
   $("f-calc").textContent=w?t.join(" · "):"";
@@ -421,7 +421,7 @@ function renderQuery(){
   $("p-prog").textContent="تم تسجيل "+c.recorded+" يوم من "+c.total+(c.total-c.recorded?" · باقي "+(c.total-c.recorded)+" لم يُسجَّل":"");
   $("p-bar").style.width=(100*c.recorded/c.total)+"%";
   $("counts").innerHTML=
-    countCard("ok",c["حضور"],"أيام حضور")+
+    countCard("acc",c.attend,"إجمالي أيام الحضور (شامل السفر)")+
     countCard("rest",c["راحة"],"أيام راحة")+
     countCard("trip",c["إذن سفر"],"إذن سفر")+
     countCard("trip",c["مأمورية سفر"],"مأمورية سفر")+
@@ -429,7 +429,6 @@ function renderQuery(){
     countCard("acc",c.extraDays,"أيام عمل إضافي")+
     countCard("warn",c["إجازة"],"إجازة")+
     countCard("bad",c["غياب"],"غياب")+
-    countCard("acc",c.attend,"إجمالي أيام الحضور (شامل السفر)")+
     countCard("warn",fmtHM(c.late).replace(" س ",":").replace(" د",""),"إجمالي التأخير (س:د)")+
     countCard("ok",fmtHM(c.ot).replace(" س ",":").replace(" د",""),"إجمالي الأوفر تايم (س:د)");
   var S=state.settings;
